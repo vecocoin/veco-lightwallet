@@ -1,0 +1,7 @@
+build.py
+.env
+UTXO_RPC.private
+build
+dist
+temp
+.idea
