@@ -30,15 +30,15 @@ spentindex=1
 Adjust the `.env` file in root folder of main.py (or the binary) based on the `.env-example` provided in the installation folder for configuration.
 When using your own VPS, the use of SSH tunneling for secure RPC communication between server and client is highly recommended!
 
-## Local compilation
+## Build
 
-Compile the client locally using PyInstaller:
+To compile the client locally using PyInstaller perform the following steps:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/vecocoin/veco-lightwallet
 cd veco-lightwallet-client
 python setup.py install
 pyinstaller main.py -w --clean -n veco-light
 ```
 
-Alternatively, run `main.py` directly for development purposes.
+Alternatively, run `main.py` directly.
