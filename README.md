@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Veco Lightwallet Client is a streamlined, user-friendly wallet designed for individuals seeking to engage with the Veco blockchain without the complexity of running a full node. It empowers users to easily create, import, and export Veco addresses, as well as perform transactions securely through a TSL-encrypted stunnel connection.
+The Veco Lightwallet Client is a streamlined, user-friendly GUI wallet designed for individuals seeking to engage with the Veco blockchain without the complexity of running a full node. It empowers users to easily create, import, and export Veco addresses, as well as perform transactions securely through a TSL-encrypted stunnel connection.
 
 ## Features
 
