@@ -11,6 +11,8 @@ The Veco Lightwallet Client is a streamlined, user-friendly GUI wallet designed 
 - Secure Communication: Default TSL-encrypted stunnel connection to the wallet RPC server.
 - Flexible Server Configuration: Switch the wallet RPC server to a local server or a personal VPS by modifying an .env file.
 
+![grafik](https://github.com/vecocoin/veco-lightwallet/assets/155781737/777c16b8-b6d8-40b7-96e0-78cc770939ec)
+
 
 ## Custom RPC Server Usage
 
