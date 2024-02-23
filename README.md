@@ -44,3 +44,6 @@ pyinstaller main.py -w --clean -n veco-light
 ```
 
 Alternatively, run `main.py` directly.
+
+## Backup your wallet profile(s)!
+The individual addresses, including their private keys of a profile, are stored in a password-encrypted json file called <profile name>_profile.json in the root directory of the wallet. This is the only place where your keys and addresses are stored. Therefore, you should back up these files from time to time and / or store private keys of your most important addresses in a secure offline environment. You will need the file + password to restore your full wallet profile or the private keys of your individual addresses. If you lose both, all your funds (on these addresses) will be lost forever.
