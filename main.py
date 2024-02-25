@@ -2,15 +2,20 @@ import json
 import os
 import sys
 import tkinter as tk
-import tkinter.font as font
+#import tkinter.font as font
 from tkinter import scrolledtext
 from tkinter import simpledialog, ttk, messagebox
+import threading
+import queue
+import time
+
 
 from cryptography.fernet import InvalidToken
 
 import sample.UTXO_RPC as UTXO_RPC
 import sample.pw_encrypt as pw_encrypt
 import sample.wallet as wallet
+import sample.addressbook as addressbook
 
 fg = "white"
 bg = "gray22"
@@ -76,9 +81,6 @@ def create_profile(start_window):
     global profile_data
 
     username = custom_ask_string("Create New Profile", "Enter username:")
-    # username = simpledialog.askstring("Create New Profile", "Enter username:")
-    # password = simpledialog.askstring("Password", "Enter your password for this account:", show='*')
-    # password_check = simpledialog.askstring("Password", "Confirm Password:", show='*')
     validuser = validate_username(username)
     if validuser:
         file_path = f"{username}_profile.json"
@@ -126,9 +128,6 @@ def load_profile(start_window):
     global salt
 
     username = custom_ask_string("Profile", "Enter your profile name:")
-
-    # username = simpledialog.askstring("Load Profile", "Enter Username:")
-    # password = simpledialog.askstring("Password", "Enter Password:", show='*')
 
     try:
         with open(f"{username}_profile.json", "r") as file:
@@ -307,7 +306,7 @@ def show_wallet_window(profile_data):
         curr_wallet = address_combobox.get()
         balance = UTXO_RPC.calculate_total_balance(curr_wallet)
         balance_label.config(text=f"Address Balance: {round(balance, 4)} VECO")
-        wallet_window.after(23500, update_balance)
+        wallet_window.after(30000, update_balance)
 
     def send_veco():
         curr_wallet = address_combobox.get()
@@ -321,19 +320,40 @@ def show_wallet_window(profile_data):
         center_window(send_window, window_width, window_height)
 
         sender_label = tk.Label(send_window, text=f"Sender address:", fg=fg, bg=bg)
-        sender_label.pack()
+        sender_label.pack(side="top")
 
         # Create a combo box widget with the available wallet addresses
         sender_address_combobox = ttk.Combobox(send_window, width=34, values=profile_data['wallet_addresses'],
                                                state="readonly")
-        sender_address_combobox.pack(pady=3)
+        sender_address_combobox.pack(side="top", pady=3)
         sender_address_combobox.set(curr_wallet)  # Set the address selected in the main window as the default value
 
-        tk.Label(send_window, text="Receiver address:", bg=bg, fg=fg).pack()
-        receiver_entry = tk.Entry(send_window, width=36)
-        receiver_entry.pack(pady=6)
+        def load_address():
+            address = addressbook.addressbook_gui(username, password, salt, bg, fg)
+            if address:
+                receiver_entry_var.set(address)
+            else:
+                None
+            #    print("No address selected or addressbook closed.")
 
-        tk.Label(send_window, text="Amount to send:", fg=fg, bg=bg).pack()
+        tk.Label(send_window, text="Receiver address:", bg=bg, fg=fg).pack(side="top")
+
+        receiver_frame = tk.Frame(send_window, bg=bg)
+        receiver_frame.pack(padx=0, pady=2, side="top")
+        receiver_entry_var = tk.StringVar()
+        receiver_entry = tk.Entry(receiver_frame, width=33, textvariable=receiver_entry_var)
+        receiver_entry.pack(side=tk.LEFT, pady=2)
+
+        addressbook_button = tk.Button(receiver_frame, text="\U0001F4D6", command=load_address,
+                                bg = bg,
+                                fg = fg,  # Text color
+                                borderwidth=1,  # Border width
+                                highlightthickness=1,  # Highlight thickness for focus
+                                relief=relief
+                                )
+        addressbook_button.pack(side=tk.RIGHT, padx=0, pady=3)
+
+        tk.Label(send_window, text="Amount to send:", fg=fg, bg=bg).pack(side="top")
 
         def set_max_amount():
             selected_sender_address = sender_address_combobox.get()
@@ -345,9 +365,9 @@ def show_wallet_window(profile_data):
             amount_entry.insert(0, max_amount)
 
         amount_frame = tk.Frame(send_window, bg=bg)
-        amount_frame.pack(padx=0, pady=2)
+        amount_frame.pack(padx=0, pady=2, side="top")
 
-        amount_entry = tk.Entry(amount_frame, width=21, font='sans 12 bold', justify='right')
+        amount_entry = tk.Entry(amount_frame, width=16, font='sans 12 bold', justify='right')
         amount_entry.pack(side=tk.LEFT, pady=2)
         max_button = tk.Button(amount_frame, text="MAX", command=set_max_amount, pady=2, padx=0, width=6,
                                bg=bg,
@@ -408,7 +428,7 @@ def show_wallet_window(profile_data):
             center_window(confirmtx, window_width, window_height)
 
             tk.Label(confirmtx, bg=bg, fg=fg,
-                     text=f"Please confirm that you want to send\n {amount_entry.get()} VECO\n  from\n  {sender_address_combobox.get()}\n  TO\n  {receiver_entry.get()}\n!",
+                     text=f"Please confirm that you want to send\n {amount_entry.get()} VECO\n  from\n  {sender_address_combobox.get()}\n  to\n  {receiver_entry.get()}\n!",
                      wraplength=300).pack()
 
             def on_confirm():
@@ -466,7 +486,7 @@ def show_wallet_window(profile_data):
                           borderwidth=1,  # Border width
                           highlightthickness=1,  # Highlight thickness for focus
                           relief=relief,
-                          font=buttonFont
+                          #font=buttonFont
                           ).pack()
 
                 # Button, to copy the generated txid
@@ -482,7 +502,7 @@ def show_wallet_window(profile_data):
             confirm_frame.pack()
 
             tk.Button(confirm_frame, text="Confirm", command=on_confirm, pady=2, padx=0, width=16,
-                      bg=bg,  # Light orange background
+                      bg=bg,  # Background
                       fg=fg,  # Text color
                       borderwidth=1,  # Border width
                       highlightthickness=1,  # Highlight thickness for focus
@@ -491,7 +511,7 @@ def show_wallet_window(profile_data):
                       ).pack(side="right", padx=0, pady=2)
 
             tk.Button(confirm_frame, text="Cancel", command=on_cancel, pady=2, padx=0, width=16,
-                      bg=bg,  # Light orange background
+                      bg=bg,  # Background
                       fg=fg,  # Text color
                       borderwidth=1,  # Border width
                       highlightthickness=1,  # Highlight thickness for focus
@@ -499,14 +519,14 @@ def show_wallet_window(profile_data):
                       # font=buttonFont
                       ).pack(side="right", padx=0, pady=2)
 
-        buttonFont = font.Font(weight='bold')
+        #buttonFont = font.Font(weight='bold')
         send_button = tk.Button(send_window, text="Create Transaction", command=prepare_tx, pady=2, padx=0, width=24,
                                 bg=bg,  # Light orange background
                                 fg=fg,  # Text color
                                 borderwidth=1,  # Border width
                                 highlightthickness=1,  # Highlight thickness for focus
                                 relief=relief,
-                                font=buttonFont
+                                #font=buttonFont
                                 )
         send_button.pack(side="bottom", padx=0, pady=7)
 
@@ -610,8 +630,8 @@ def show_wallet_window(profile_data):
     status_label = tk.Label(status_frame, text="RPC Connection: ", bg=bg, fg=fg)
     status_label.pack(side=tk.LEFT)
 
-    # Hinzufügen eines ScrolledText-Widgets für die Konsolen-Ausgabe
-    console = scrolledtext.ScrolledText(wallet_window, height=10, bg=bg, fg=fg)  # Höhe auf 10 Zeilen gesetzt
+    # Add scroll widget for console
+    console = scrolledtext.ScrolledText(wallet_window, height=10)  # Höhe auf 10 Zeilen gesetzt
     console.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
     console.config(state='disabled')  # Verhindert direkte Bearbeitung durch den Benutzer
 
@@ -619,27 +639,41 @@ def show_wallet_window(profile_data):
 
     print(f"Profile <{username}> loaded.")
 
-    def update_rpc_status():
-        connected, blocknumber = UTXO_RPC.get_current_block()
-        if connected:
-            status_light.config(fg='green3')
-            status_label.config(text=f"RPC connection established. Current block height: {blocknumber}")
-        else:
-            status_light.config(fg='red')
-            status_label.config(text="RPC connection not available")
-            print("\nCan't establish RPC connection to server!")
-        # Fetch connection status and block number every 10 s.
-        wallet_window.after(30000, update_rpc_status)
+    def check_queue():
+        try:
+            connected, blocknumber = status_queue.get_nowait()
+            update_gui_status(status_light, status_label, connected, blocknumber)
+        except queue.Empty:
+            pass
+        wallet_window.after(100, check_queue)
 
-    # Initialize balance and status update upon starting the window
-    update_rpc_status()
+    status_queue = queue.Queue()
+    status_thread = threading.Thread(target=update_rpc_status, args=(status_queue,), daemon=True)
+    status_thread.start()
+    check_queue()  # Start checking the queue in the main GUI thread
 
     update_balance()
+
+def update_gui_status(status_light, status_label, connected, blocknumber):
+    if connected:
+        status_light.config(fg='green3')
+        status_label.config(text=f"RPC connection established. Current block height: {blocknumber}")
+    else:
+        status_light.config(fg='red')
+        status_label.config(text="RPC connection not available")
+
+
+def update_rpc_status(status_queue):
+    while True:
+        connected, blocknumber = UTXO_RPC.get_current_block()
+        # Write update in queue
+        status_queue.put((connected, blocknumber))
+        time.sleep(10)  # Sleep for 10 seconds
 
 
 def show_start_window():
     start_window = tk.Tk()
-    start_window.title("Veco Light Wallet")
+    start_window.title("Veco Light Wallet 1.0.0")
     logo = tk.PhotoImage(file="sample/veco_light.png")
     window_width = 750
     window_height = 274
@@ -651,23 +685,6 @@ def show_start_window():
     login_frame = tk.Frame(start_window, bg=bg)
     login_frame.grid(row=1, columnspan=2)
 
-    '''
-    # Create a BooleanVar to hold the state of the Checkbutton
-    custom_rpc_var = tk.BooleanVar(value=False)
-
-    
-    # Function to update the global variable based on the Checkbutton's state
-    def update_custom_rpc():
-        # Directly modify the custom_RPC variable in the config module
-        config.custom_RPC = custom_rpc_var.get()
-
-    # Add the Checkbutton to the window
-    custom_rpc_checkbutton = tk.Checkbutton(login_frame, text="Use custom RPC settings",
-                                            variable=custom_rpc_var,
-                                            onvalue=True, offvalue=False, command=update_custom_rpc,
-                                            bg=bg, fg=fg, selectcolor=bg)
-    custom_rpc_checkbutton.pack(side=tk.BOTTOM, padx=20)
-    '''
     create_button = tk.Button(login_frame, text="Create Profile", command=lambda: create_profile(start_window), pady=5,
                               width=40,
                               bg=bg,
@@ -676,7 +693,6 @@ def show_start_window():
                               highlightthickness=1,  # Highlight thickness for focus
                               relief=relief,
                               )
-    # create_button.grid(row=0, column=0, sticky="EW",ipadx=80)
     create_button.pack(side=tk.LEFT, padx=20)
     load_button = tk.Button(login_frame, text="Load Profile", command=lambda: load_profile(start_window), pady=5,
                             width=40,
@@ -686,7 +702,6 @@ def show_start_window():
                             highlightthickness=1,  # Highlight thickness for focus
                             relief=relief,
                             )
-    # load_button.grid(row=0, column=1, columnspan=2,ipadx=80)
     load_button.pack(side=tk.LEFT, padx=20)
 
     start_window.mainloop()
