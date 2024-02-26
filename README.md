@@ -21,7 +21,7 @@ The Veco Lightwallet Client is a lightweight, user-friendly GUI wallet designed 
 Ensure your VPS or local server's full-node is running with the specified settings in the config file:
 
 ```plaintext
-rpcallowip=1
+rpcallowip=127.0.0.1
 listen=1
 daemon=1
 server=1
