@@ -2,13 +2,9 @@ import json
 import os
 import sys
 import tkinter as tk
-#import tkinter.font as font
+
 from tkinter import scrolledtext
 from tkinter import simpledialog, ttk, messagebox
-import threading
-import queue
-import time
-
 
 from cryptography.fernet import InvalidToken
 
@@ -639,36 +635,26 @@ def show_wallet_window(profile_data):
 
     print(f"Profile <{username}> loaded.")
 
-    def check_queue():
+    def update_status():
         try:
-            connected, blocknumber = status_queue.get_nowait()
-            update_gui_status(status_light, status_label, connected, blocknumber)
-        except queue.Empty:
-            pass
-        wallet_window.after(100, check_queue)
+            connected, blocknumber = UTXO_RPC.get_current_block()
+            if connected:
+                # Aktualisieren Sie die GUI, um den neuen Status anzuzeigen
+                status_label.config(text=f"RPC connection established. Current block height: {blocknumber}")
+                status_light.config(fg='green3')
+            else:
+                status_label.config(text="RPC connection not available")
+                status_light.config(fg='red')
+        except Exception as e:
+            status_label.config(text=f"Error: {str(e)}")
+            status_light.config(fg='red')
 
-    status_queue = queue.Queue()
-    status_thread = threading.Thread(target=update_rpc_status, args=(status_queue,), daemon=True)
-    status_thread.start()
-    check_queue()  # Start checking the queue in the main GUI thread
+        # Planen Sie die nächste Ausführung dieser Funktion
+        wallet_window.after(10000, update_status)  # 10 Sekunden Verzögerung
+
+    update_status()
 
     update_balance()
-
-def update_gui_status(status_light, status_label, connected, blocknumber):
-    if connected:
-        status_light.config(fg='green3')
-        status_label.config(text=f"RPC connection established. Current block height: {blocknumber}")
-    else:
-        status_light.config(fg='red')
-        status_label.config(text="RPC connection not available")
-
-
-def update_rpc_status(status_queue):
-    while True:
-        connected, blocknumber = UTXO_RPC.get_current_block()
-        # Write update in queue
-        status_queue.put((connected, blocknumber))
-        time.sleep(10)  # Sleep for 10 seconds
 
 
 def show_start_window():

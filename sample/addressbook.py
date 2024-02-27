@@ -76,9 +76,9 @@ def addressbook_gui(username: str, password: str, salt, bg, fg):
     global modal, addressbook
     addressbook = load_addressbook(username, password, salt)
 
-    def select_entry(event):  # Event-Parameter hinzugefügt
+    def select_entry(event):  # Event-Parameter added
         selected_item = tree.selection()[0]
-        if selected_item:  # Überprüfen, ob ein Item ausgewählt wurde
+        if selected_item:  # Probe if an item was selected
             selected_address = tree.item(selected_item)['values'][1]
             modal.result = selected_address
             modal.destroy()
@@ -113,8 +113,6 @@ def addressbook_gui(username: str, password: str, salt, bg, fg):
         pack(side=tk.LEFT, padx=6)
     tk.Button(addressbook_frame , text="Remove entry", command=lambda: remove_entry(tree, username, password, salt), bg=bg, fg=fg).\
         pack(side=tk.LEFT, padx=6)
-
-
 
     modal.wait_window()  # Wait until closed
 
