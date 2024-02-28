@@ -419,20 +419,20 @@ def show_wallet_window(profile_data):
             confirmtx = tk.Toplevel(wallet_window, bg=bg)
             confirmtx.title("Confirm Transaction")
 
-            window_width = 300
+            window_width = 360
             window_height = 200
             center_window(confirmtx, window_width, window_height)
 
             tk.Label(confirmtx, bg=bg, fg=fg,
-                     text=f"Please confirm that you want to send\n {amount_entry.get()} VECO\n  from\n  {sender_address_combobox.get()}\n  to\n  {receiver_entry.get()}\n!",
-                     wraplength=300).pack()
+                     text=f"Please confirm that you want to send\n {amount_entry.get()} VECO\n  from\n  {sender_address_combobox.get()}\n  to\n  {receiver_entry.get()}\n",
+                     wraplength=350).pack()
 
             def on_confirm():
                 tx_sent = UTXO_RPC.send_raw_tx(sign_tx)
                 txinfo = tk.Toplevel(confirmtx, bg=bg)
                 txinfo.geometry("300x150")
                 txinfo.title("Transaction Submitted")
-                window_width = 300
+                window_width = 350
                 window_height = 150
                 center_window(txinfo, window_width, window_height)
 
