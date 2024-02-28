@@ -430,7 +430,7 @@ def show_wallet_window(profile_data):
             def on_confirm():
                 tx_sent = UTXO_RPC.send_raw_tx(sign_tx)
                 txinfo = tk.Toplevel(confirmtx, bg=bg)
-                send_window.geometry("300x150")
+                txinfo.geometry("300x150")
                 txinfo.title("Transaction Submitted")
                 window_width = 300
                 window_height = 150
